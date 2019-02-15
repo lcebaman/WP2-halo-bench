@@ -1,18 +1,13 @@
 #include <mpi.h>
+#include "compute.h"
 
 #define MAX_REQUESTS 27
-
-void compute_edge_A() {};
-void compute_edge_B() {};
-void compute_middle_A() {};
-void compute_middle_B() {};
 
 int main() {
 
     /* read data from storage into A */
     double *bufA;
     double *bufB;
-
 
     MPI_Datatype dtA_edges[MAX_REQUESTS];
     MPI_Datatype dtA_halos[MAX_REQUESTS];

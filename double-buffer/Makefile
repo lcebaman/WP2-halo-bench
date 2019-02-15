@@ -1,11 +1,12 @@
 src = $(wildcard *.c)
 obj = $(src:.c=.o)
 
+CC = mpicc
 LDFLAGS = 
 
-myprog: $(obj)
+myprog.exe: $(obj)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:
-	rm -f $(obj) myprog
+	rm -f $(obj) myprog.exe
