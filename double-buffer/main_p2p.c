@@ -19,10 +19,16 @@ int main() {
     MPI_Datatype dtB_edges[MAX_REQUESTS];
     MPI_Datatype dtB_halos[MAX_REQUESTS];
 
-    MPI_Request requests_odd_sends[MAX_REQUESTS];
-    MPI_Request requests_odd_recvs[MAX_REQUESTS];
-    MPI_Request requests_even_sends[MAX_REQUESTS];
-    MPI_Request requests_even_recvs[MAX_REQUESTS];
+    MPI_Request  requests[4 * MAX_REQUESTS];
+
+    MPI_Request *requests_even_recvs = &requests[0 * MAX_REQUESTS];
+    MPI_Request *requests_odd_sends  = &requests[1 * MAX_REQUESTS];
+    MPI_Request *requests_odd_recvs  = &requests[2 * MAX_REQUESTS];
+    MPI_Request *requests_even_sends = &requests[3 * MAX_REQUESTS];
+
+    MPI_Request *requests_for_edge_A = &requests[0 * MAX_REQUESTS];
+    MPI_Request *requests_pre_loop   = &requests[1 * MAX_REQUESTS];
+    MPI_Request *requests_for_edge_B = &requests[2 * MAX_REQUESTS];
 
     int tagA = 1, tagB = 2;
     MPI_Comm comm = MPI_COMM_WORLD;
@@ -38,52 +44,41 @@ int main() {
 
 #if INPUT_EXCLUDES_HALO
         //send_edge_A_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_odd_sends);
         //recv_halo_A_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_odd_recvs);
+        MPI_Startall(MAX_REQUESTS * 2, requests_pre_loop);
 #endif
 
     for (int i=0;i<1000;++i) {
         //send_edge_B_wait(&status);
-        MPI_Waitall(MAX_REQUESTS, requests_even_sends, MPI_STATUSES_IGNORE);
         //recv_halo_A_wait(&status);
-        MPI_Waitall(MAX_REQUESTS, requests_odd_recvs, MPI_STATUSES_IGNORE);
+        MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_B, MPI_STATUSES_IGNORE);
         compute_edge_B();
+        MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_B);
         //send_edge_B_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_even_sends);
         //recv_halo_A_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_odd_recvs);
 
         compute_middle_B();
 
         //send_edge_A_wait(&status);
-        MPI_Waitall(MAX_REQUESTS, requests_odd_sends, MPI_STATUSES_IGNORE);
         //recv_halo_B_wait(&status);
-        MPI_Waitall(MAX_REQUESTS, requests_even_recvs, MPI_STATUSES_IGNORE);
+        MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_A, MPI_STATUSES_IGNORE);
         compute_edge_A();
         //send_edge_A_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_odd_sends);
         //recv_halo_B_start(&status);
-        MPI_Startall(MAX_REQUESTS, requests_even_recvs);
+        MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_A);
 
         compute_middle_A();
     }
 
     //send_edge_B_wait(&status);
-    MPI_Waitall(MAX_REQUESTS, requests_even_sends, MPI_STATUSES_IGNORE);
     //recv_halo_A_wait(&status);
-    MPI_Waitall(MAX_REQUESTS, requests_odd_recvs, MPI_STATUSES_IGNORE);
     //send_edge_A_wait(&status);
-    MPI_Waitall(MAX_REQUESTS, requests_odd_sends, MPI_STATUSES_IGNORE);
     //recv_halo_B_wait(&status);
-    MPI_Waitall(MAX_REQUESTS, requests_even_recvs, MPI_STATUSES_IGNORE);
+    MPI_Waitall(MAX_REQUESTS * 4, requests, MPI_STATUSES_IGNORE);
 
     //comms_postloop(&status);
-    for (int r=0;r<MAX_REQUESTS;++r) {
-        MPI_Request_free(&requests_odd_sends[r]);
-        MPI_Request_free(&requests_odd_recvs[r]);
-        MPI_Request_free(&requests_even_sends[r]);
-        MPI_Request_free(&requests_even_recvs[r]);
+    for (int r=0;r<MAX_REQUESTS*4;++r) {
+        MPI_Request_free(&requests[r]);
     }
 
     /* write data to storage from A */
