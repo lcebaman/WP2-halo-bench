@@ -52,6 +52,8 @@ int main(int argc, char** argv) {
   /* Create partitioning of overall grid on processes */
   MPI_Cart_coords (cart, rank, 2, coords); /*My coordinate*/
   
+  if(rank == 2)
+    printf("N=%d; S=%d; E=%d; W=%d\n",north,south,east,west);
   
   // put neighbours in the same buffer
   int neighbours[MAX_REQUESTS];
@@ -110,7 +112,7 @@ int main(int argc, char** argv) {
     for (j = 0 ;j < N; j++)
       bufA[indx(i,j)] =  (double) rand();
   
-  exit(1);
+  //exit(1);
 
   int sIndx[MAX_REQUESTS];
   int rIndx[MAX_REQUESTS];
@@ -176,7 +178,8 @@ int main(int argc, char** argv) {
   }
 
   /* write data to storage from A */
-  
+  if(!rank)
+    printf("End of Benchmark\n");
   /* finalize MPI */
   MPI_Finalize();
   
