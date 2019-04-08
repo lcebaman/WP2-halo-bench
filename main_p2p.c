@@ -31,11 +31,6 @@ int main(int argc, char** argv) {
   MPI_Comm cart;
   int north,south,east,west;
  
-  /* allocate space for buffers */
-  double *bufA = (double*) calloc(1,(N+1)*(N+1)*sizeof(double));
-  double *bufB = (double*) calloc(1,(N+1)*(N+1)*sizeof(double));
-
-  /* read data from storage into A */
   
   // who are my neighbours?
   
@@ -52,8 +47,8 @@ int main(int argc, char** argv) {
   /* Create partitioning of overall grid on processes */
   MPI_Cart_coords (cart, rank, 2, coords); /*My coordinate*/
   
-  if(rank == 2)
-    printf("N=%d; S=%d; E=%d; W=%d\n",north,south,east,west);
+  // if(rank == 2)
+  printf("rank: %d-> N=%d; S=%d; E=%d; W=%d\n",north,south,east,west);
   
   // put neighbours in the same buffer
   int neighbours[MAX_REQUESTS];
@@ -64,8 +59,15 @@ int main(int argc, char** argv) {
   int bx = N/dims[0]; // block size in x
   int by = N/dims[1]; // block size in y
   
-  if(!rank)
-    printf("N = %d , Xlocal = %d, Ylocal= %d and processes= %d\n", N, bx, by, size);
+  //if(!rank)
+  printf("rank: %d-> N = %d , Xlocal = %d, Ylocal= %d and processes= %d\n",
+	 rank, N, bx, by, size);
+
+  /* allocate space for buffers */
+  double *bufA = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
+  double *bufB = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
+  
+  /* read data from storage into A */
  
 
   MPI_Datatype dtA_edges[MAX_REQUESTS];
@@ -112,13 +114,13 @@ int main(int argc, char** argv) {
     for (j = 0 ;j < N; j++)
       bufA[indx(i,j)] =  (double) rand();
   
-  //exit(1);
 
   int sIndx[MAX_REQUESTS];
   int rIndx[MAX_REQUESTS];
   sIndx[0] = indx(1,1); sIndx[1] = indx(1,by); sIndx[2] = indx(bx,1);sIndx[3]= indx(1,1);
   rIndx[0] = indx(1,0); rIndx[1] = indx(1,by+1); rIndx[2] = indx(bx+1,1);rIndx[3]= indx(0,1);
-  
+
+  double s_preloop = MPI_Wtime();
   //comms_preloop(&status);
   for (int neighbour=0 ;neighbour < MAX_REQUESTS; ++neighbour) {
     
@@ -136,14 +138,22 @@ int main(int argc, char** argv) {
     MPI_Recv_init(&bufB[rIndx[neighbour]], 1, dtB_halos[neighbour], neighbours[neighbour], tagB,
                   comm, &requests_even_recvs[neighbour]);
   }
+  double e_preloop = MPI_Wtime();
 
 #if INPUT_EXCLUDES_HALO
   //send_edge_A_start(&status);
   //recv_halo_A_start(&status);
   MPI_Startall(MAX_REQUESTS * 2, requests_pre_loop);
 #endif
+  double s_comp_mid_A,e_comp_mid_A;
+  double s_comp_mid_B,e_comp_mid_B;
+  
+  double s_comp_edge_A,e_comp_edge_A;
+  double s_comp_edge_B,e_comp_edge_B;
+  
+  double s_mainloop = MPI_Wtime();
 
-  for (int i=0;i<1000;++i) {
+  for (int i=0;i < 1000; ++i) {
 
     //send_edge_B_wait(&status);
     //recv_halo_A_wait(&status);
@@ -166,6 +176,7 @@ int main(int argc, char** argv) {
     compute_middle_A();
   }
 
+  double e_mainloop = MPI_Wtime();
   //send_edge_B_wait(&status);
   //recv_halo_A_wait(&status);
   //send_edge_A_wait(&status);
