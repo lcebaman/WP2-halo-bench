@@ -47,9 +47,10 @@ int main(int argc, char** argv) {
   /* Create partitioning of overall grid on processes */
   MPI_Cart_coords (cart, rank, 2, coords); /*My coordinate*/
   
-  // if(rank == 2)
+#ifdef DEBUG
   printf("rank: %d-> N=%d; S=%d; E=%d; W=%d\n",north,south,east,west);
-  
+#endif
+
   // put neighbours in the same buffer
   int neighbours[MAX_REQUESTS];
 
@@ -59,17 +60,16 @@ int main(int argc, char** argv) {
   int bx = N/dims[0]; // block size in x
   int by = N/dims[1]; // block size in y
   
-  //if(!rank)
-  printf("rank: %d-> N = %d , Xlocal = %d, Ylocal= %d and processes= %d\n",
+#ifdef DEBUG
+  printf("rank: %d-> N = %d , Xlocal = %d, Ylocal= %d and processes= %d\n", 
 	 rank, N, bx, by, size);
+#endif
 
   /* allocate space for buffers */
   double *bufA = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
   double *bufB = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
   
-  /* read data from storage into A */
- 
-
+  
   MPI_Datatype dtA_edges[MAX_REQUESTS];
   MPI_Datatype dtA_halos[MAX_REQUESTS];
   MPI_Datatype dtB_edges[MAX_REQUESTS];
@@ -145,11 +145,13 @@ int main(int argc, char** argv) {
   //recv_halo_A_start(&status);
   MPI_Startall(MAX_REQUESTS * 2, requests_pre_loop);
 #endif
-  double s_comp_mid_A,e_comp_mid_A;
-  double s_comp_mid_B,e_comp_mid_B;
   
-  double s_comp_edge_A,e_comp_edge_A;
-  double s_comp_edge_B,e_comp_edge_B;
+  double s_comp_mid_A=0.0;
+  double s_comp_mid_B=0.0;
+  
+  double s_comp_edge_A=0.0;
+  double s_comp_edge_B=0.0;
+  double tmp=0.0;
   
   double s_mainloop = MPI_Wtime();
 
@@ -158,31 +160,44 @@ int main(int argc, char** argv) {
     //send_edge_B_wait(&status);
     //recv_halo_A_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_B, MPI_STATUSES_IGNORE);
+    
+    tmp =  MPI_Wtime();
     compute_edge_B();
+    s_comp_edge_B +=  MPI_Wtime() - tmp;
+    
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_B);
     //send_edge_B_start(&status);
     //recv_halo_A_start(&status);
-
+    tmp =  MPI_Wtime();
     compute_middle_B();
-
+    s_comp_mid_B +=  MPI_Wtime() - tmp;
     //send_edge_A_wait(&status);
     //recv_halo_B_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_A, MPI_STATUSES_IGNORE);
+    
+    tmp =  MPI_Wtime();
     compute_edge_A();
+    s_comp_edge_A +=  MPI_Wtime() - tmp;
+    
     //send_edge_A_start(&status);
     //recv_halo_B_start(&status);
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_A);
-
+    
+    tmp =  MPI_Wtime();
     compute_middle_A();
+    s_comp_mid_A +=  MPI_Wtime() - tmp;
   }
 
-  double e_mainloop = MPI_Wtime();
+  double e_mainloop = MPI_Wtime() - s_mainloop;
+  
   //send_edge_B_wait(&status);
   //recv_halo_A_wait(&status);
   //send_edge_A_wait(&status);
   //recv_halo_B_wait(&status);
   MPI_Waitall(MAX_REQUESTS * 4, requests, MPI_STATUSES_IGNORE);
-
+  if(!rank)
+    printf("main_loop= %f; comp_edge_B= %f; comp_edge_A= %f; comp_mid_B= %f; comp_mid_A= %f\n",
+	   e_mainloop,s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
   //comms_postloop(&status);
   for (int r=0;r<MAX_REQUESTS*4;++r) {
     MPI_Request_free(&requests[r]);
