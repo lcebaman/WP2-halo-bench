@@ -195,9 +195,15 @@ int main(int argc, char** argv) {
   //send_edge_A_wait(&status);
   //recv_halo_B_wait(&status);
   MPI_Waitall(MAX_REQUESTS * 4, requests, MPI_STATUSES_IGNORE);
+  
+
   if(!rank)
-    printf("main_loop= %f; comp_edge_B= %f; comp_edge_A= %f; comp_mid_B= %f; comp_mid_A= %f\n",
-	   e_mainloop,s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
+    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f; comp_mid_B= %f;"
+	   "comp_mid_A= %f\n",
+	   size,e_mainloop,(s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A),
+	   s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
+ 
+
   //comms_postloop(&status);
   for (int r=0;r<MAX_REQUESTS*4;++r) {
     MPI_Request_free(&requests[r]);
