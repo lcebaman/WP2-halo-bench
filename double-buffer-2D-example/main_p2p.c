@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <time.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "compute.h"
 
@@ -12,16 +14,74 @@
 // we want a request per neighbour, in a 2D grid we've got 4
 #define MAX_REQUESTS 4
 
+
+
+void print_usage() {
+    printf("Usage:  [ap] -tedgeA num -tedgeB num -tmiddleA num"
+	   " -tmiddleB num -iter num -N num \n");
+}
+
+
 int main(int argc, char** argv) {
   
   int i,j;
   int N; 
   int rank,size;
+  int opt;
+  int loopIter;
+  int edgeA,edgeB,middleA,middleB;
+  
   MPI_Init(&argc, &argv);
   
+  /* benchmark default values */
+  loopIter = 1000;
+  edgeA = 100;
+  edgeB = 100;
+  middleA = 1000;
+  middleB = 1000;
+  N = 120;
+  
+  opterr = 0;
+  
 
-  if(argc < 2) N = 120;
-  else N = atoi(argv[1]);
+  /*****************************************************/
+  /*     Command line parameters                       */
+  /*                                                   */
+  /*****************************************************/
+  
+  /* Specifying the expected options */
+  static struct option long_options[] = {
+    {"tedgeA",    required_argument, 0,  'a' },
+    {"tedgeB",    required_argument, 0,  'b' },
+    {"tmiddleA",  required_argument, 0,  'c' },
+    {"tmiddleB",  required_argument, 0,  'd' },
+    {"iter",      required_argument, 0,  't' },
+    {"N",         required_argument, 0,  'N' }
+  };
+  
+  int long_index =0;
+  while ((opt = getopt_long_only(argc, argv,"", 
+				 long_options, &long_index )) != -1) {
+    switch (opt) {
+    case 'a' : edgeA = atoi(optarg);
+      break;
+    case 'b' : edgeB = atoi(optarg);
+      break;
+    case 'c' : middleA = atoi(optarg); 
+      break;
+    case 'd' : middleB = atoi(optarg);
+      break;
+    case 't' : loopIter = atoi(optarg);
+      break;
+    case 'N' : N = atoi(optarg);
+      break;
+    default: 
+      if(!rank)
+	print_usage(); 
+      exit(EXIT_FAILURE);
+    }
+  }
+  
   
   
   MPI_Comm comm = MPI_COMM_WORLD;
@@ -39,6 +99,10 @@ int main(int argc, char** argv) {
   
   //printf("Procs in X %d and Y %d\n",dims[0], dims[1]);
   MPI_Cart_create (MPI_COMM_WORLD, 2, dims, periods, 0, &cart);
+
+#ifdef DEBUG
+  printf("dimes[0] = %d; dims[1] = %d\n",dims[0], dims[1]);
+#endif
   
   /* Store neighbors in the grid */
   MPI_Cart_shift (cart, 0, 1, &west,  &east);
@@ -110,8 +174,8 @@ int main(int argc, char** argv) {
   
   /* initial conditions */
   srand ( time ( NULL));
-  for (i = 0 ;i < N; i++)
-    for (j = 0 ;j < N; j++)
+  for (i = 0 ;i < bx+2; i++)
+    for (j = 0 ;j < by+2; j++)
       bufA[indx(i,j)] =  (double) rand();
   
 
@@ -155,37 +219,47 @@ int main(int argc, char** argv) {
   MPI_Startall(MAX_REQUESTS * 2, requests_pre_loop);
 #endif
   
-  for (int i=0;i < 1000; ++i) {
+  for (int i=0;i < loopIter; ++i) {
 
     //send_edge_B_wait(&status);
     //recv_halo_A_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_B, MPI_STATUSES_IGNORE);
-    
+
+#ifdef  NO_COMM
     tmp =  MPI_Wtime();
-    compute_edge_B();
+    compute_edge_B(tedgeB);
     s_comp_edge_B +=  MPI_Wtime() - tmp;
+#endif
     
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_B);
     //send_edge_B_start(&status);
     //recv_halo_A_start(&status);
+#ifdef  NO_COMM
     tmp =  MPI_Wtime();
-    compute_middle_B();
+    compute_middle_B(tmiddleB);
     s_comp_mid_B +=  MPI_Wtime() - tmp;
+#endif  NO_COMM
+
     //send_edge_A_wait(&status);
     //recv_halo_B_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_A, MPI_STATUSES_IGNORE);
-    
+
+#ifdef  NO_COMM    
     tmp =  MPI_Wtime();
-    compute_edge_A();
+    compute_edge_A(tedgeA);
     s_comp_edge_A +=  MPI_Wtime() - tmp;
+#endif  NO_COMM
     
     //send_edge_A_start(&status);
     //recv_halo_B_start(&status);
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_A);
     
+#ifdef  NO_COMM
     tmp =  MPI_Wtime();
-    compute_middle_A();
+    compute_middle_A(tmiddleA);
     s_comp_mid_A +=  MPI_Wtime() - tmp;
+#endif  NO_COMM
+
   }
 
   //send_edge_B_wait(&status);
@@ -197,13 +271,20 @@ int main(int argc, char** argv) {
   double e_mainloop = MPI_Wtime() - s_mainloop;
   
 
-  if(!rank)
-    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f; comp_mid_B= %f;"
+  if(!rank){
+    
+#ifdef NO_COMP
+    printf("Ranks: %d; main_loop = %f; Time per iter = %f \n",size, e_mainloop, 
+	   (double)(e_mainloop/loopIter));
+#else 
+    
+    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f;comp_mid_B= %f;"
 	   "comp_mid_A= %f\n",
 	   size,e_mainloop,(s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A),
 	   s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
- 
-
+#endif
+  }
+  
   //comms_postloop(&status);
   for (int r=0;r<MAX_REQUESTS*4;++r) {
     MPI_Request_free(&requests[r]);
