@@ -29,16 +29,16 @@ int main(int argc, char** argv) {
   int rank,size;
   int opt;
   int loopIter;
-  int edgeA,edgeB,middleA,middleB;
+  int tedgeA,tedgeB,tmiddleA,tmiddleB;
   
   MPI_Init(&argc, &argv);
   
   /* benchmark default values */
   loopIter = 1000;
-  edgeA = 100;
-  edgeB = 100;
-  middleA = 1000;
-  middleB = 1000;
+  tedgeA = 100;
+  tedgeB = 100;
+  tmiddleA = 1000;
+  tmiddleB = 1000;
   N = 120;
   
   opterr = 0;
@@ -56,20 +56,20 @@ int main(int argc, char** argv) {
     {"tmiddleA",  required_argument, 0,  'c' },
     {"tmiddleB",  required_argument, 0,  'd' },
     {"iter",      required_argument, 0,  't' },
-    {"N",         required_argument, 0,  'N' }
+    {"N",   required_argument, 0,  'N' }
   };
   
   int long_index =0;
   while ((opt = getopt_long_only(argc, argv,"", 
 				 long_options, &long_index )) != -1) {
     switch (opt) {
-    case 'a' : edgeA = atoi(optarg);
+    case 'a' : tedgeA = atoi(optarg);
       break;
-    case 'b' : edgeB = atoi(optarg);
+    case 'b' : tedgeB = atoi(optarg);
       break;
-    case 'c' : middleA = atoi(optarg); 
+    case 'c' : tmiddleA = atoi(optarg); 
       break;
-    case 'd' : middleB = atoi(optarg);
+    case 'd' : tmiddleB = atoi(optarg);
       break;
     case 't' : loopIter = atoi(optarg);
       break;
@@ -121,12 +121,12 @@ int main(int argc, char** argv) {
 
   /* decompose the domain */
   
-  int bx = N/dims[0]; // block size in x
-  int by = N/dims[1]; // block size in y
+  int bx = N; // block size in x
+  int by = N; // block size in y
   
 #ifdef DEBUG
-  printf("rank: %d-> N = %d , Xlocal = %d, Ylocal= %d and processes= %d\n", 
-	 rank, N, bx, by, size);
+  printf("rank: %d-> Xlocal = %d, Ylocal= %d and processes= %d\n", 
+	 rank, bx, by, size);
 #endif
 
   /* allocate space for buffers */
@@ -225,40 +225,40 @@ int main(int argc, char** argv) {
     //recv_halo_A_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_B, MPI_STATUSES_IGNORE);
 
-#ifdef  NO_COMM
+
     tmp =  MPI_Wtime();
     compute_edge_B(tedgeB);
     s_comp_edge_B +=  MPI_Wtime() - tmp;
-#endif
+
     
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_B);
     //send_edge_B_start(&status);
     //recv_halo_A_start(&status);
-#ifdef  NO_COMM
+
     tmp =  MPI_Wtime();
     compute_middle_B(tmiddleB);
     s_comp_mid_B +=  MPI_Wtime() - tmp;
-#endif  NO_COMM
+
 
     //send_edge_A_wait(&status);
     //recv_halo_B_wait(&status);
     MPI_Waitall(MAX_REQUESTS * 2, requests_for_edge_A, MPI_STATUSES_IGNORE);
 
-#ifdef  NO_COMM    
+
     tmp =  MPI_Wtime();
     compute_edge_A(tedgeA);
     s_comp_edge_A +=  MPI_Wtime() - tmp;
-#endif  NO_COMM
+
     
     //send_edge_A_start(&status);
     //recv_halo_B_start(&status);
     MPI_Startall(MAX_REQUESTS * 2, requests_for_edge_A);
     
-#ifdef  NO_COMM
+
     tmp =  MPI_Wtime();
     compute_middle_A(tmiddleA);
     s_comp_mid_A +=  MPI_Wtime() - tmp;
-#endif  NO_COMM
+
 
   }
 
@@ -276,10 +276,9 @@ int main(int argc, char** argv) {
 #ifdef NO_COMP
     printf("Ranks: %d; main_loop = %f; Time per iter = %f \n",size, e_mainloop, 
 	   (double)(e_mainloop/loopIter));
-#else 
-    
-    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f;comp_mid_B= %f;"
-	   "comp_mid_A= %f\n",
+#else    
+    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f;"
+	   "comp_mid_B= %f; comp_mid_A= %f\n",
 	   size,e_mainloop,(s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A),
 	   s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
 #endif
