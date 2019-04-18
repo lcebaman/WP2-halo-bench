@@ -129,6 +129,7 @@ int main(int argc, char** argv) {
 	 rank, bx, by, size);
 #endif
 
+
   /* allocate space for buffers */
   double *bufA = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
   double *bufB = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
@@ -171,6 +172,8 @@ int main(int argc, char** argv) {
 
   int tagA = 1, tagB = 2;
   
+  if(!rank)
+    printf("Benchmark run on %d MPI processes\n\n",size);
   
   /* initial conditions */
   srand ( time ( NULL));
@@ -268,16 +271,18 @@ int main(int argc, char** argv) {
   //recv_halo_B_wait(&status);
   MPI_Waitall(MAX_REQUESTS * 4, requests, MPI_STATUSES_IGNORE);
   
-  double e_mainloop = MPI_Wtime() - s_mainloop;
+  double Tloop = MPI_Wtime() - s_mainloop;
   
 
+  double Tcomp = (s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A);
+  double Tcomm = Tloop - Tcomp;
+
   if(!rank){
-    
-    printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f;"
-	   "comp_mid_B= %f; comp_mid_A= %f\n",
-	   size,e_mainloop,(s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A),
-	   s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
+    printf("Main loop= %f; TotComp= %f; TotComm= %f\n\n",
+	   size, Tloop,Tcomp, Tcomm);
   }  
+  
+  
   //comms_postloop(&status);
   for (int r=0;r<MAX_REQUESTS*4;++r) {
     MPI_Request_free(&requests[r]);
