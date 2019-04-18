@@ -2,8 +2,6 @@
 
 #include "compute.h"
 
-#define REF_TIME 10
-
 void compute_edge_A(unsigned int tea) {
   usleep(tea);
 }
