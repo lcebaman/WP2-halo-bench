@@ -273,17 +273,11 @@ int main(int argc, char** argv) {
 
   if(!rank){
     
-#ifdef NO_COMP
-    printf("Ranks: %d; main_loop = %f; Time per iter = %f \n",size, e_mainloop, 
-	   (double)(e_mainloop/loopIter));
-#else    
     printf("Ranks: %d; main_loop= %f; TotComp= %f; comp_edge_B= %f; comp_edge_A= %f;"
 	   "comp_mid_B= %f; comp_mid_A= %f\n",
 	   size,e_mainloop,(s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A),
 	   s_comp_edge_B, s_comp_edge_A, s_comp_mid_B, s_comp_mid_A);
-#endif
-  }
-  
+  }  
   //comms_postloop(&status);
   for (int r=0;r<MAX_REQUESTS*4;++r) {
     MPI_Request_free(&requests[r]);
