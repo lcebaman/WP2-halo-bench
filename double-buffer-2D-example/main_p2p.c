@@ -48,6 +48,23 @@ int main(int argc, char** argv) {
   /*     Command line parameters                       */
   /*                                                   */
   /*****************************************************/
+  /* 
+  
+    Input Parameters:
+
+.  tedgeA   -  Time (useconds) for computing the edges of array A
+
+.  tedgeB   -  Time (useconds) for computing the edges of array B
+
+.  tmiddleA -  Time (useconds) for computing the middle of array A
+
+.  tmiddleB -  Time (useconds) for computing the middle of array B
+
+.  iter     -  Number of loop iterations
+
+.  N        -  Message size 
+
+ */
   
   /* Specifying the expected options */
   static struct option long_options[] = {
