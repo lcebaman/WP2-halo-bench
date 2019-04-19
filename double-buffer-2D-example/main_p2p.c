@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 
 .  iter     -  Number of loop iterations
 
-.  N        -  Message size 
+.  N        -  Message size in halo (comm) 
 
  */
   
@@ -106,30 +106,32 @@ int main(int argc, char** argv) {
   MPI_Comm_size(comm, &size);
   int dims[2] = {0,0}, periods[2] = {1,1}, coords[2];
   MPI_Comm cart;
-  int north,south,east,west;
+  int up,down,left,right;
  
-  
-  // who are my neighbours?
-  
   /* Create cartesian communicator */
   MPI_Dims_create (size, 2, dims);
   
-  //printf("Procs in X %d and Y %d\n",dims[0], dims[1]);
-  MPI_Cart_create (MPI_COMM_WORLD, 2, dims, periods, 0, &cart);
+  MPI_Cart_create (MPI_COMM_WORLD, 2, dims, periods, 1, &cart);
 
 #ifdef DEBUG
-  printf("dimes[0] = %d; dims[1] = %d\n",dims[0], dims[1]);
+  if(!rank)
+    printf("dims[0] = %d; dims[1] = %d\n",dims[0], dims[1]);
 #endif
-  
-  /* Store neighbors in the grid */
-  MPI_Cart_shift (cart, 0, 1, &west,  &east);
-  MPI_Cart_shift (cart, 1, 1, &north, &south);
-  
+
   /* Create partitioning of overall grid on processes */
   MPI_Cart_coords (cart, rank, 2, coords); /*My coordinate*/
+  int my_cart_rank;
+  /* use my coords to find my rank in cartesian group*/
+  MPI_Cart_rank(cart, coords, &my_cart_rank);
+  
+  /* Store neighbors in the grid */
+  MPI_Cart_shift (cart, 0, 1, &left, &right);
+  MPI_Cart_shift (cart, 1, 1, &up, &down);
+  
   
 #ifdef DEBUG
-  printf("rank: %d-> N=%d; S=%d; E=%d; W=%d\n",north,south,east,west);
+  printf("rank: %d-> U=%d; D=%d; L=%d; R=%d\n",rank, up, down, left, right);
+  fflush(stdout);
 #endif
 
   // put neighbours in the same buffer
@@ -141,11 +143,6 @@ int main(int argc, char** argv) {
   int bx = N; // block size in x
   int by = N; // block size in y
   
-#ifdef DEBUG
-  printf("rank: %d-> Xlocal = %d, Ylocal= %d and processes= %d\n", 
-	 rank, bx, by, size);
-#endif
-
 
   /* allocate space for buffers */
   double *bufA = (double*) calloc(1,(bx+2)*(by+2)*sizeof(double));
@@ -157,24 +154,24 @@ int main(int argc, char** argv) {
   MPI_Datatype dtB_edges[MAX_REQUESTS];
   MPI_Datatype dtB_halos[MAX_REQUESTS];
 
-  /* create north-south datatype */
-  MPI_Datatype north_south_dt;
-  MPI_Type_contiguous(bx, MPI_DOUBLE, &north_south_dt);
-  MPI_Type_commit(&north_south_dt);
-  /* create east-west datatype */
-  MPI_Datatype east_west_dt;
-  MPI_Type_vector(by , 1, bx+2, MPI_DOUBLE, &east_west_dt);
-  MPI_Type_commit(&east_west_dt);
+  /* create up-down datatype */
+  MPI_Datatype up_down_dt;
+  MPI_Type_contiguous(bx, MPI_DOUBLE, &up_down_dt);
+  MPI_Type_commit(&up_down_dt);
+  /* create right-left datatype */
+  MPI_Datatype right_left_dt;
+  MPI_Type_vector(by , 1, bx+2, MPI_DOUBLE, &right_left_dt);
+  MPI_Type_commit(&right_left_dt);
 
-  /* (0)north -> (1)south -> (2)east -> (3)west */
-  neighbours[0] = north; neighbours[1] = south;
-  neighbours[2] = east;  neighbours[3] = west; 
+  /* (0)up -> (1)down -> (2)right -> (3)left */
+  neighbours[0] = up; neighbours[1] = down;
+  neighbours[2] = right;  neighbours[3] = left; 
 
 
-  dtA_halos[0] = dtA_halos[1] = dtA_edges[0] =  dtA_edges[1] = north_south_dt;
-  dtA_halos[2] = dtA_halos[3] = dtA_edges[2] =  dtA_edges[3] = east_west_dt;
-  dtB_halos[0] = dtB_halos[1] = dtB_edges[0] =  dtB_edges[1] = north_south_dt;
-  dtB_halos[2] = dtB_halos[3] = dtB_edges[2] =  dtB_edges[3] = east_west_dt;
+  dtA_halos[0] = dtA_halos[1] = dtA_edges[0] =  dtA_edges[1] = up_down_dt;
+  dtA_halos[2] = dtA_halos[3] = dtA_edges[2] =  dtA_edges[3] = right_left_dt;
+  dtB_halos[0] = dtB_halos[1] = dtB_edges[0] =  dtB_edges[1] = up_down_dt;
+  dtB_halos[2] = dtB_halos[3] = dtB_edges[2] =  dtB_edges[3] = right_left_dt;
 
   MPI_Request  requests[4 * MAX_REQUESTS];
 
@@ -230,6 +227,10 @@ int main(int argc, char** argv) {
   double s_comp_edge_A=0.0;
   double s_comp_edge_B=0.0;
   double tmp=0.0;
+
+  /* timer warm up */
+  for(int i=0;i < 1000; i++)
+    MPI_Wtime();
   
   double s_mainloop = MPI_Wtime();
 
@@ -295,8 +296,9 @@ int main(int argc, char** argv) {
   double Tcomm = Tloop - Tcomp;
 
   if(!rank){
-    printf("Main loop= %f; TotComp= %f; TotComm= %f\n\n",
-	   size, Tloop,Tcomp, Tcomm);
+    printf("Total Loop : %f\n", Tloop);
+    printf("Total Computation : %f\n", Tcomp);
+    printf("Total Communication : %f\n\n", Tcomm);
   }  
   
   
@@ -313,3 +315,4 @@ int main(int argc, char** argv) {
   
   return 0;
 }
+
