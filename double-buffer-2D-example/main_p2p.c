@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
 .  N        -  Message size in halo (comm) 
 
- */
+  */
   
   /* Specifying the expected options */
   static struct option long_options[] = {
