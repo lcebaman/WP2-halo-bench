@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     .  iter     -  Number of loop iterations
 
     .  N        -  Message size in halo (comm)
-    
+
     .  avg      -  Number of iterations of to get average values
 
   */
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
       exit(EXIT_FAILURE);
     }
   }
-  
+
   /* if(rank ==0){ */
   /*   printf("Benchmark will run:\n"); */
   /*   printf("Iterations: %d\n",loopIter); */
@@ -122,14 +122,14 @@ int main(int argc, char** argv) {
   /*   fflush(stdout); */
   /* } */
 
-  
+
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
   int dims[2] = {0,0}, periods[2] = {1,1}, coords[2];
   MPI_Comm cart;
   int up,down,left,right;
-  
+
   /* Create cartesian communicator */
   MPI_Dims_create (size, 2, dims);
 
@@ -225,8 +225,8 @@ int main(int argc, char** argv) {
     printf("Benchmark run on %d MPI processes\n\n",size);
     print_parameters(loopIter, N, avg);
   }
-  
- 
+
+
   /* initial conditions */
   srand ( time ( NULL));
   for (i = 0; i < bx+2; i++)
@@ -240,23 +240,26 @@ int main(int argc, char** argv) {
   rIndx[0] = indx(1,0); rIndx[1] = indx(1,by+1); rIndx[2] = indx(bx+1,1);rIndx[3]= indx(0,1);
 
   double s_preloop = MPI_Wtime();
+
   //comms_preloop(&status);
   for (int neighbour=0; neighbour < MAX_REQUESTS; ++neighbour) {
 
     /*MPI_Send_init(const void *buf, int count, MPI_Datatype datatype, int dest,
       int tag, MPI_Comm comm, MPI_Request *request) */
     MPI_Send_init(&bufA[sIndx[neighbour]], 1, dtA_edges[neighbour], neighbours[neighbour],
-		  tagA, comm, &requests_odd_sends[neighbour]);
+                  tagA, comm, &requests_odd_sends[neighbour]);
     /* MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
        int tag, MPI_Comm comm, MPI_Request *request) */
     MPI_Recv_init(&bufA[rIndx[neighbour]], 1, dtA_halos[neighbour], neighbours[neighbour],
-		  tagA, comm, &requests_odd_recvs[neighbour]);
+                  tagA, comm, &requests_odd_recvs[neighbour]);
 
     MPI_Send_init(&bufB[sIndx[neighbour]], 1, dtB_edges[neighbour], neighbours[neighbour],
-		  tagB, comm, &requests_even_sends[neighbour]);
+                  tagB, comm, &requests_even_sends[neighbour]);
     MPI_Recv_init(&bufB[rIndx[neighbour]], 1, dtB_halos[neighbour], neighbours[neighbour],
-		  tagB, comm, &requests_even_recvs[neighbour]);
+                  tagB, comm, &requests_even_recvs[neighbour]);
   }
+
+
   double e_preloop = MPI_Wtime();
 
   double s_comp_mid_A=0.0;
@@ -277,8 +280,8 @@ int main(int argc, char** argv) {
 
 
   /* Run the test several times to get better average */
-  for(int a=0; a < avg; a++){
-  
+  for(int a = 0; a < avg; a++){
+
     s_mainloop = MPI_Wtime();
 
 #if INPUT_EXCLUDES_HALO
@@ -347,22 +350,25 @@ int main(int argc, char** argv) {
     /* Tcomm = Tloop - Tcomp; */
 
     /* iteration timers */
-    mainloop = MPI_Wtime() - s_mainloop; 
+    mainloop = MPI_Wtime() - s_mainloop;
+
 #ifndef NOCOMPUTE
     iTcomp = (s_comp_edge_B+s_comp_edge_A+s_comp_mid_B+s_comp_mid_A);
 #else
     iTcomp = 0.0;
 #endif
     iTcomm = mainloop - iTcomp;
-    
+
     /* Global timers */
     Tloop = Tloop + mainloop;
     Tcomp = Tcomp + iTcomp;
     Tcomm = Tcomm + iTcomm;
     /* reset timers */
-    s_comp_edge_B = s_comp_edge_A = s_comp_mid_B = s_comp_mid_A = 0.0; 
-} 
+    s_comp_edge_B = s_comp_edge_A = s_comp_mid_B = s_comp_mid_A = 0.0;
 
+  }// end of avg loop
+
+  /* Get average values */
   Tloop = Tloop/(double)avg;
   Tcomp = Tcomp/(double)avg;;
   Tcomm = Tcomm/(double)avg;
@@ -380,9 +386,6 @@ int main(int argc, char** argv) {
     MPI_Request_free(&requests[r]);
   }
 
-  /* write data to storage from A */
-  if(!rank)
-    printf("End of Benchmark\n");
   /* finalize MPI */
   MPI_Finalize();
 
