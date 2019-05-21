@@ -21,8 +21,7 @@
 
 
 void print_usage() {
-  printf("Usage:  [ap] -tedgeA num -tedgeB num -tmiddleA num"
-         " -tmiddleB num -iter num -N num \n");
+  printf("Usage:  [ap]  -iter num -N num -avg num\n");
 }
 
 void print_parameters(int a, int b, int c) {
@@ -38,16 +37,11 @@ int main(int argc, char** argv) {
   int rank,size;
   int opt;
   int loopIter,avg;
-  int tedgeA,tedgeB,tmiddleA,tmiddleB;
 
   MPI_Init(&argc, &argv);
 
   /* benchmark default values */
   loopIter = 1000;
-  tedgeA = 100;
-  tedgeB = 100;
-  tmiddleA = 1000;
-  tmiddleB = 1000;
   N = 120;
   avg = 10;
 
@@ -62,14 +56,6 @@ int main(int argc, char** argv) {
 
     Input Parameters:
 
-    .  tedgeA   -  Time (useconds) for computing the edges of array A
-
-    .  tedgeB   -  Time (useconds) for computing the edges of array B
-
-    .  tmiddleA -  Time (useconds) for computing the middle of array A
-
-    .  tmiddleB -  Time (useconds) for computing the middle of array B
-
     .  iter     -  Number of loop iterations
 
     .  N        -  Message size in halo (comm)
@@ -80,10 +66,6 @@ int main(int argc, char** argv) {
 
   /* Specifying the expected options */
   static struct option long_options[] = {
-    {"tedgeA",    required_argument, 0,  'a' },
-    {"tedgeB",    required_argument, 0,  'b' },
-    {"tmiddleA",  required_argument, 0,  'c' },
-    {"tmiddleB",  required_argument, 0,  'd' },
     {"iter",      required_argument, 0,  't' },
     {"N",         required_argument, 0,  'N' },
     {"avg",       required_argument, 0,  'v' }
@@ -93,14 +75,6 @@ int main(int argc, char** argv) {
   while ((opt = getopt_long_only(argc, argv,"",
                                  long_options, &long_index )) != -1) {
     switch (opt) {
-    case 'a' : tedgeA = atoi(optarg);
-      break;
-    case 'b' : tedgeB = atoi(optarg);
-      break;
-    case 'c' : tmiddleA = atoi(optarg);
-      break;
-    case 'd' : tmiddleB = atoi(optarg);
-      break;
     case 't' : loopIter = atoi(optarg);
       break;
     case 'N' : N = atoi(optarg);
@@ -113,14 +87,6 @@ int main(int argc, char** argv) {
       exit(EXIT_FAILURE);
     }
   }
-
-  /* if(rank ==0){ */
-  /*   printf("Benchmark will run:\n"); */
-  /*   printf("Iterations: %d\n",loopIter); */
-  /*   printf("Message size: %d bytes: %d\n",N*sizeof(double)); */
-  /*   printf("Average samples: %d\n",avg); */
-  /*   fflush(stdout); */
-  /* } */
 
 
   MPI_Comm comm = MPI_COMM_WORLD;
@@ -299,7 +265,6 @@ int main(int argc, char** argv) {
 
 #ifndef NOCOMPUTE
       tmp =  MPI_Wtime();
-      //compute_edge_B(tedgeB);
       compute_edgeB(bufB, bx, by);
       s_comp_edge_B +=  MPI_Wtime() - tmp;
 #endif
@@ -310,7 +275,6 @@ int main(int argc, char** argv) {
 
 #ifndef NOCOMPUTE
       tmp =  MPI_Wtime();
-      //compute_middle_B(tmiddleB);
       compute_middleB(bufB, bx, by);
       s_comp_mid_B +=  MPI_Wtime() - tmp;
 #endif
@@ -321,7 +285,6 @@ int main(int argc, char** argv) {
 
 #ifndef NOCOMPUTE
       tmp =  MPI_Wtime();
-      //compute_edge_A(tedgeA);
       compute_edgeA(bufA, bx, by);
       s_comp_edge_A +=  MPI_Wtime() - tmp;
 #endif
@@ -332,7 +295,6 @@ int main(int argc, char** argv) {
 
 #ifndef NOCOMPUTE
       tmp =  MPI_Wtime();
-      //compute_middle_A(tmiddleA);
       compute_middleA(bufA, bx, by);
       s_comp_mid_A +=  MPI_Wtime() - tmp;
 #endif
@@ -373,12 +335,10 @@ int main(int argc, char** argv) {
   Tcomp = Tcomp/(double)avg;;
   Tcomm = Tcomm/(double)avg;
 
-  if(!rank){
-    printf("\n\n", Tloop);
-    printf("Total Loop : %f\n", Tloop);
-    printf("Total Computation : %f\n", Tcomp);
-    printf("Total Communication : %f\n\n", Tcomm);
-  }
+
+  /* all ranks print out:  rank  TotalTime TotalCompTime TotalCommTime */
+  printf("%d   %f   %f   %f\n", rank, Tloop, Tcomp, Tcomm);
+  fflush(stdout);
 
 
   //comms_postloop(&status);
