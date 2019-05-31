@@ -1,0 +1,26 @@
+# plot DoubleBuffer
+set terminal png notransparent rounded font 24
+set output "doubleBuffer.png"
+set multiplot
+set log y
+set key left
+set xlabel "Message size (KBytes)"
+set ylabel "Time (s)"
+p "double/cross" u ($2*8/1024):3 w lp title "Total", "" u ($2*8/1024):4 w lp title "Computation", "\
+" u ($2*8/1024):5 w lp title "Communication"
+set origin 0.45,0.1
+set size 0.45,0.4
+set xrange[0.5:2.5]
+set yrange[0.005:0.12]
+unset xlabel
+unset ylabel
+unset label
+set mxtics
+p "double/cross" u ($2*8/1024):3 w lp notitle, "" u ($2*8/1024):4 w lp notitle, "" u ($2*8/1024):5 \
+w lp notitle
+
+unset multiplot
+unset output
+
+
+
