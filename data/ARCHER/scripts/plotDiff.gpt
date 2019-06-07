@@ -1,0 +1,26 @@
+set terminal png notransparent rounded font 24
+set output "compDiff.png"
+set xlabel "Message size (KBytes)"
+set ylabel "Computation time difference Overlap/Double Buffer(s)"
+set style line 1 lt 1 lc rgb "#A00000" lw 2 pt 7 ps 1.5
+set style line 2 lt 1 lc rgb "#00A000" lw 2 pt 11 ps 1.5
+set style line 3 lt 1 lc rgb "#5060D0" lw 2 pt 9 ps 1.5
+set style line 4 lt 1 lc rgb "#0000A0" lw 2 pt 8 ps 1.5
+set style line 5 lt 1 lc rgb "#D0D000" lw 2 pt 13 ps 1.5
+set style line 6 lt 1 lc rgb "#00D0D0" lw 2 pt 12 ps 1.5
+set style line 7 lt 1 lc rgb "#B200B2" lw 2 pt 5 ps 1.5
+set xtics add 16
+set mxtics
+
+
+plot '< sort -n difference.dat ' u (($1*8)/1024):($3-$7) w lp notitle ls 1
+
+replot
+
+set output
+set output "commDiff.png"
+set ylabel "Communication time difference Overlap/Double Buffer(s)"
+plot '< sort -n difference.dat ' u (($1*8)/1024):($4-$8) w lp notitle ls 3
+
+replot
+set output
