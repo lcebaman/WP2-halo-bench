@@ -1,0 +1,23 @@
+#!/bin/bash --login
+#PBS -N logOver
+#PBS -l select=4
+#PBS -l walltime=00:20:00
+#PBS -A z19-cse
+##PBS -q short
+
+#module load atp
+
+export ATP_ENABLED=1
+
+cd $PBS_O_WORKDIR
+
+procs=48
+MaxbufferSize=16384
+i=9216
+
+#export PAT_RT_PERFCTR=1,2
+aprun -n ${procs} -N 12 -S 6 ./overlap.exe+apa -iter 2000 \
+    -N ${i} -avg 1 
+
+
+

@@ -1,0 +1,384 @@
+CrayPat/X:  Version 7.0.5 Revision 82c1110  11/21/18 11:31:23
+
+Number of PEs (MPI ranks):   48
+                           
+Numbers of PEs per Node:     12  PEs on each of  4  Nodes
+                           
+Numbers of Threads per PE:    1
+                           
+Number of Cores per Socket:  12
+
+Execution start time:  Sat May 18 23:15:01 2019
+
+System name and speed:  nid00052  2.701 GHz (nominal)
+
+Intel Ivy Bridge CPU  Family:  6  Model: 62  Stepping:  4
+
+DRAM:  64 GiB DDR3-1866 on 2.7 GHz nodes
+
+
+Current path to data file:
+  /work/z01/z01/lcebaman/halo-bench/double-buffer-2D-example/overlap.exe+pat+23466-52s   (RTS, 4 data files)
+
+
+Notes for table 1:
+
+  This table shows functions that have significant exclusive sample
+    hits, averaged across ranks.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O samp_profile ...
+
+Table 1:  Profile by Function (limited entries shown)
+
+  Samp% |     Samp |    Imb. |  Imb. | Group
+        |          |    Samp | Samp% |  Function
+        |          |         |       |   PE=HIDE
+       
+ 100.0% | 74,392.7 |      -- |    -- | Total
+|-----------------------------------------------------
+|  93.7% | 69,670.9 |      -- |    -- | USER
+||----------------------------------------------------
+||  46.7% | 34,778.1 | 1,762.9 |  4.9% | compute_middleA
+||  46.7% | 34,767.5 | 1,895.5 |  5.3% | compute_middleB
+||====================================================
+|   6.0% |  4,479.1 |      -- |    -- | MPI
+||----------------------------------------------------
+||   5.3% |  3,976.0 | 4,223.0 | 52.6% | MPI_Waitall
+|=====================================================
+
+Notes for table 2:
+
+  This table shows functions that have the most significant exclusive
+    time, taking the maximum time across ranks and threads.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O profile_max ...
+
+Table 2:  Profile of maximum function times (limited entries shown)
+
+  Samp% |     Samp |    Imb. |  Imb. | Function
+        |          |    Samp | Samp% |  PE=[max,min]
+|-----------------------------------------------------
+| 100.0% | 36,663.0 | 1,895.5 |  5.3% | compute_middleB
+||----------------------------------------------------
+|| 100.0% | 36,663.0 |      -- |    -- | pe.0
+||  89.0% | 32,622.0 |      -- |    -- | pe.32
+||====================================================
+|  99.7% | 36,541.0 | 1,762.9 |  4.9% | compute_middleA
+||----------------------------------------------------
+||  99.7% | 36,541.0 |      -- |    -- | pe.5
+||  88.6% | 32,490.0 |      -- |    -- | pe.32
+||====================================================
+|  22.4% |  8,199.0 | 4,223.0 | 52.6% | MPI_Waitall
+||----------------------------------------------------
+||  22.4% |  8,199.0 |      -- |    -- | pe.32
+||   0.9% |    321.0 |      -- |    -- | pe.0
+||====================================================
+|   2.0% |    725.0 |   223.8 | 31.5% | MPI_Startall
+||----------------------------------------------------
+||   2.0% |    725.0 |      -- |    -- | pe.2
+||   0.8% |    285.0 |      -- |    -- | pe.11
+||====================================================
+|   1.0% |    379.0 |   327.2 | 88.2% | random
+||----------------------------------------------------
+||   1.0% |    379.0 |      -- |    -- | pe.12
+||   0.0% |     16.0 |      -- |    -- | pe.46
+|=====================================================
+
+===================  Observations and suggestions  ===================
+
+MPI Grid Detection:
+
+    A 8x6 grid pattern was detected in sent message traffic.  Because only
+    6.0% of the total execution time was spent in MPI functions, modifying
+    the rank order is unlikely to significantly improve overall performance.
+
+
+Metric-Based Rank Order:
+
+    No rank order was suggested based on the USER Samp metric because
+    that metric was already well balanced across the nodes.
+
+
+Stall Cycles:
+
+    Stall cycles are 85.2% of total cycles, which exceeds the guideline
+    of 40.0%. This can be caused by issues in the program such as
+    saturation of memory bandwidth.
+
+=========================  End Observations  =========================
+
+Notes for table 3:
+
+  This table shows functions, and line numbers within functions, that
+    have significant exclusive sample hits, averaged across ranks.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O samp_profile+src ...
+
+Table 3:  Profile by Group, Function, and Line (limited entries shown)
+
+  Samp% |     Samp |    Imb. |  Imb. | Group
+        |          |    Samp | Samp% |  Function
+        |          |         |       |   Source
+        |          |         |       |    Line
+        |          |         |       |     PE=HIDE
+       
+ 100.0% | 74,392.8 |      -- |    -- | Total
+|-----------------------------------------------------------------------------
+|  93.7% | 69,670.9 |      -- |    -- | USER
+||----------------------------------------------------------------------------
+||  46.7% | 34,778.1 |      -- |    -- | compute_middleA
+3|        |          |         |       |  lcebaman/halo-bench/double-buffer-2D-example/compute.c
+||||--------------------------------------------------------------------------
+4|||   1.1% |    842.4 |   398.6 | 32.8% | line.43
+4|||  45.6% | 33,935.5 | 1,867.5 |  5.3% | line.46
+||||==========================================================================
+||  46.7% | 34,767.5 |      -- |    -- | compute_middleB
+3|        |          |         |       |  lcebaman/halo-bench/double-buffer-2D-example/compute.c
+||||--------------------------------------------------------------------------
+4|||   1.1% |    832.7 |   392.3 | 32.7% | line.80
+4|||  45.6% | 33,934.5 | 1,710.5 |  4.9% | line.83
+||============================================================================
+|   6.0% |  4,479.1 |      -- |    -- | MPI
+||----------------------------------------------------------------------------
+||   5.3% |  3,976.0 | 4,223.0 | 52.6% | MPI_Waitall
+|=============================================================================
+
+Notes for table 4:
+
+  This table shows HW performance counter data for the whole program,
+    averaged across ranks or threads, as applicable.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O hwpc ...
+
+Table 4:  Program HW Performance Counter Data (limited entries shown)
+
+PE=HIDE
+
+  
+==============================================================================
+  Total
+------------------------------------------------------------------------------
+  Thread Time                                               745.206906 secs
+  CPU_CLK_UNHALTED:THREAD_P                          2,224,391,786,826 
+  DTLB_LOAD_MISSES:WALK_DURATION                        21,551,234,283 
+  INST_RETIRED:ANY_P                                   941,254,315,726 
+  RESOURCE_STALLS:ANY                                1,895,357,452,237 
+  UNHALTED_REFERENCE_CYCLES                          2,001,961,467,768 
+  OFFCORE_RESPONSE_0:ANY_REQUEST:LLC_MISS_LOCAL         40,910,314,399 
+  OFFCORE_RESPONSE_1:ANY_REQUEST:LLC_MISS_REMOTE         1,974,920,539 
+  CPU CLK Boost                                                   1.11 X
+  Resource stall cycles / Cycles                                 85.2% 
+  Memory traffic GBytes                       3.683G/sec         2,745 GB
+  Local Memory traffic GBytes                 3.513G/sec         2,618 GB
+  Remote Memory traffic GBytes                0.170G/sec        126.39 GB
+  Retired Inst per Clock                                          0.42 
+==============================================================================
+
+Notes for table 5:
+
+  This table show the average time and number of bytes read from each
+    input file, taking the average over the number of ranks that read
+    from the file.  It also shows the number of read operations, and
+    average rates.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O read_stats ...
+
+Table 5:  File Input Stats by Filename (limited entries shown)
+
+ Avg Read | Avg Read |   Read Rate | Number |    Avg | Bytes/ | File Name=!x/^/(proc|sys)/
+ Time per |  MiBytes | MiBytes/sec |     of |  Reads |   Call |  PE=HIDE
+   Reader |      per |             | Reader |    per |        | 
+     Rank |   Reader |             |  Ranks | Reader |        | 
+          |     Rank |             |        |   Rank |        | 
+|-----------------------------------------------------------------------------
+| 0.000007 | 0.000018 |    2.640325 |     44 |    2.4 |   8.00 | _UnknownFile_
+|=============================================================================
+
+Notes for table 6:
+
+  This table show the average time and number of bytes written to each
+    output file, taking the average over the number of ranks that
+    wrote to the file.  It also shows the number of write operations,
+    and average rates.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O write_stats ...
+
+Table 6:  File Output Stats by Filename (limited entries shown)
+
+      Avg |      Avg |  Write Rate | Number |    Avg | Bytes/ | File Name=!x/^/(proc|sys)/
+    Write |    Write | MiBytes/sec |     of | Writes |   Call |  PE=HIDE
+ Time per |  MiBytes |             | Writer |    per |        | 
+   Writer |      per |             |  Ranks | Writer |        | 
+     Rank |   Writer |             |        |   Rank |        | 
+          |     Rank |             |        |        |        | 
+|-----------------------------------------------------------------------------
+| 0.000058 | 0.000041 |    0.706730 |     48 |    1.1 |  39.50 | stdout
+| 0.000025 | 0.000292 |   11.597801 |     48 |    9.6 |  32.00 | _UnknownFile_
+|=============================================================================
+
+Notes for table 7:
+
+  This table shows energy and power usage for the nodes with the
+    maximum, mean, and minimum usage, as well as the sum of usage over
+    all nodes.
+    Energy and power for accelerators is also shown, if applicable.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O program_energy ...
+
+Table 7:
+  Program energy and power usage (from Cray PM) (limited entries shown)
+
+    Node |     Node |    Process | Node Id
+  Energy |    Power |       Time |  PE=HIDE
+     (J) |      (W) |            | 
+        
+ 732,770 |  983.287 | 745.224345 | Total
+|------------------------------------------
+| 185,402 |  248.899 | 744.887181 | nid.54
+| 183,808 |  246.589 | 745.400957 | nid.55
+| 182,666 |  245.019 | 745.517726 | nid.52
+| 180,895 |  242.782 | 745.091516 | nid.53
+|==========================================
+
+Notes for table 8:
+
+  This table shows values shown for HiMem calculated from information
+    in the /proc/self/numa_maps files captured near the end of the
+    program. It is the total size of all pages, including huge pages,
+    that were actually mapped into physical memory from both private
+    and shared memory segments.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O himem ...
+
+Table 8:  Memory High Water Mark by Numa Node (limited entries shown)
+
+   Process |     HiMem |     HiMem | Numanode
+     HiMem | Numa Node | Numa Node |  PE=HIDE
+ (MiBytes) |         0 |         1 | 
+           | (MiBytes) | (MiBytes) | 
+|----------------------------------------------
+|   1,334.3 |   1,332.9 |       1.4 | numanode.0
+|   1,334.2 |       3.8 |   1,330.4 | numanode.1
+|==============================================
+
+Notes for table 9:
+
+  This table shows total wall clock time for the ranks with the
+    maximum, mean, and minimum time, as well as the average across
+    ranks.
+    It also shows maximum memory usage from /proc/self/numa_maps for
+    those ranks, and on average.  The usage is total size of all
+    pages, including huge pages, that were actually mapped into
+    physical memory from both private and shared memory segments.
+  For further explanation, see the "General table notes" below,
+    or use:  pat_report -v -O program_time ...
+
+Table 9:  Wall Clock Time, Memory High Water Mark (limited entries shown)
+
+    Process |   Process | PE=[mmm]
+       Time |     HiMem | 
+            | (MiBytes) | 
+           
+ 745.224345 |   1,334.2 | Total
+|---------------------------------
+| 745.670211 |   1,334.6 | pe.0
+| 745.238118 |   1,334.2 | pe.13
+| 744.496951 |   1,334.2 | pe.26
+|=================================
+
+========================  Additional details  ========================
+
+
+
+General table notes:
+
+    The default notes for a table do not account for the effects
+    of additional command-line options, but the detailed notes
+    produced by the -v option do account for them.
+    
+    An imbalance metric in a line is based on values in main threads
+    across multiple ranks, or on values across all threads, as applicable.
+    
+    An imbalance percent in a line is relative to the maximum value
+    for that line across ranks or threads, as applicable.
+    
+Experiment:  samp_cs_time
+
+Sampling interval:  10000 microsecs
+
+Original path to data file:
+  /fs3/z01/z01/lcebaman/halo-bench/double-buffer-2D-example/overlap.exe+pat+23466-52s/xf-files   (RTS, 4 data files)
+
+Original program:
+  /fs3/z01/z01/lcebaman/halo-bench/double-buffer-2D-example/overlap.exe
+
+Instrumented with:  pat_build overlap.exe
+
+  Option file "apa" contained:
+    -Drtenv=PAT_RT_PERFCTR=default_samp
+    -Drtenv=PAT_RT_EXPERIMENT=samp_cs_time
+    -Drtenv=PAT_RT_SAMPLING_MODE=3
+    -g upc
+    -g caf
+    -g mpi
+    -g shmem
+    -g syscall
+    -g io
+
+Instrumented program:  ./overlap.exe+pat
+
+Program invocation:  ./overlap.exe+pat -iter 2000 -N 9216 -avg 1
+
+Exit Status:  0 for 48 PEs
+
+Memory pagesize:  4 KiB
+
+Memory hugepagesize:  Not Available
+
+Programming environment:  CRAY
+
+Runtime environment variables:
+  CRAYOS_VERSION=5.2.82
+  CRAYPE_VERSION=2.5.10
+  CRAY_BINUTILS_VERSION=/opt/cray/cce/8.5.8
+  CRAY_CC_VERSION=8.5.8
+  CRAY_FTN_VERSION=8.5.8
+  CRAY_LIBSCI_VERSION=16.11.1
+  LIBSCI_VERSION=16.11.1
+  MODULE_VERSION=3.2.10.6
+  MODULE_VERSION_STACK=3.2.10.6
+  MPICH_ABORT_ON_ERROR=1
+  MPICH_DIR=/opt/cray/mpt/7.5.5/gni/mpich-cray/8.4
+  OMP_NUM_THREADS=1
+  PAT_RT_EXPERIMENT=samp_cs_time
+  PAT_RT_PERFCTR=default_samp
+  PAT_RT_SAMPLING_MODE=3
+  PMI_FORK_RANK=0
+  PMI_GNI_COOKIE=1999765504:1999831040
+  PMI_GNI_DEV_ID=0
+  PMI_GNI_LOC_ADDR=52:52
+  PMI_GNI_PTAG=24:25
+  XTOS_VERSION=5.2.82
+
+Report time environment variables:
+    CRAYPAT_ROOT=/opt/cray/perftools/7.0.5
+    PAT_REPORT_PRUNE_NAME=_cray$mt_execute_,_cray$mt_start_,__cray_hwpc_,f_cray_hwpc_,cstart,__pat_,pat_region_,PAT_,OMP.slave_loop,slave_entry,_new_slave_entry,_thread_pool_slave_entry,THREAD_POOL_join,__libc_start_main,_start,__start,start_thread,__wrap_,UPC_ADIO_,_upc_,upc_,__caf_,__pgas_,syscall,__device_stub
+
+Number of MPI control variables collected:  104
+
+  (To see the list, specify: -s mpi_cvar=show)
+
+Report command line options:  <none>
+
+Operating system:
+  Linux 3.0.101-0.46.1_1.0502.8871-cray_ari_c #1 SMP Mon Oct 8 17:27:42 UTC 2018
+
+Hardware performance counter events:
+   CPU_CLK_UNHALTED:THREAD_P                       Cycles when processor is not in halted state:Cycles when thread is not halted
+   DTLB_LOAD_MISSES:WALK_DURATION                  Data TLB load misses:Cycles PMH is busy with a walk due to demand loads
+   INST_RETIRED:ANY_P                              Instructions retired:Number of instructions retired
+   RESOURCE_STALLS:ANY                             Resource related stall cycles:Cycles stalled due to Resource Related reason
+   UNHALTED_REFERENCE_CYCLES                       Unhalted reference cycles
+   OFFCORE_RESPONSE_0:ANY_REQUEST:LLC_MISS_LOCAL   Offcore response event (must provide at least one request type andeither any_response or any combination of supplier + snoop):Request: combination of all request umasks:Supplier: counts L3 misses to local DRAM
+   OFFCORE_RESPONSE_1:ANY_REQUEST:LLC_MISS_REMOTE  Offcore response event (must provide at least one request type andeither any_response or any combination of supplier + snoop):Request: combination of all request umasks:Supplier: counts L3 misses to remote DRAM
+

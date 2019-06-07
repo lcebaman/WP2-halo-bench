@@ -1,0 +1,38 @@
+#!/bin/bash --login
+#PBS -N logDouble
+#PBS -l select=4
+#PBS -l walltime=16:00:00
+#PBS -A z19-cse
+##PBS -q short
+
+module load atp
+
+export ATP_ENABLED=1
+
+cd $PBS_O_WORKDIR
+
+procs=48
+MaxbufferSize=16384
+
+#for ((i=${MaxbufferSize}; i>=0; i=i/2))
+#for ((i=1; i<=${MaxbufferSize}; i=i*2))
+for i in 1 2 4 8 16 32 64 128 256 512 1024 1280 1536 1792 2048 
+do
+    aprun -n ${procs} -N 12 -S 6 ./double.exe -iter 2000 \
+ 	-N ${i} -avg 5 > double/${i}_out
+done
+
+
+for i in 2560 3072 3584 4096 5120 6144 7168 8192 9216 
+do
+    aprun -n ${procs} -N 12 -S 6 ./double.exe -iter 2000 \
+	-N ${i} -avg 2 > double/${i}_out
+done
+
+for i in 10240 11264 12288 13312 14336 15360 16384
+do
+    aprun -n ${procs} -N 12 -S 6 ./double.exe -iter 2000 \
+	-N ${i} -avg 1 > double/${i}_out
+done
+
+

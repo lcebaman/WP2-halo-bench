@@ -1,0 +1,28 @@
+#!/bin/bash --login
+#PBS -N logDouble
+#PBS -l select=4
+#PBS -l walltime=08:20:00
+#PBS -A z19-cse
+##PBS -q short
+
+module load atp
+
+export ATP_ENABLED=1
+
+cd $PBS_O_WORKDIR
+
+procs=48
+MaxbufferSize=16384
+
+#for ((i=${MaxbufferSize}; i>=0; i=i/2))
+for ((i=4096; i<=${MaxbufferSize}; i=i*2))
+do
+    aprun -n ${procs} -N 12 -S 6 ./double.exe -iter 2000 \
+ 	-N ${i} > double/${procs}_${i}_out
+done
+
+for ((i=4096; i<=${MaxbufferSize}; i=i*2))
+do
+    aprun -n ${procs} -N 12 -S 6 ./overlap.exe -iter 2000 \
+        -N ${i} > overlap/${procs}_${i}_out
+done
